@@ -112,3 +112,4 @@ async def get_participants(course_id: int):
     """Получить список участников курса."""
     participants = await CoursesService().get_participants(course_id)
     return participants
+
