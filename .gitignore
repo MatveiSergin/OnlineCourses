@@ -1,0 +1,11 @@
+.venv
+.mypy_cache
+.vscode
+postgre
+.env
+.idea
+__pycache__
+.pytest_cache
+.python-version
+*.log
+dev.py
