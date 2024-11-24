@@ -1,11 +1,15 @@
 import uuid
 
 from fastapi import APIRouter, HTTPException, status, Depends
+from starlette.responses import Response
 
 from api.permissions import check_admin, check_student_or_admin
+from database.models import UsersORM
 from schemas.auth import UserOut
 from schemas.courses import CourseOut, CourseUpdate, CourseCreate
 from services.courses import CoursesService
+from services.file_service import FileService
+from user import current_user
 
 courses_router = APIRouter(prefix="/courses", tags=["Courses"])
 
@@ -87,7 +91,11 @@ async def delete_course(course_id: int):
 )
 async def add_participant(course_id: int, user_id: uuid.UUID):
     """Добавить участника в курс."""
-    await CoursesService().add_participant(course_id, user_id)
+    if not await CoursesService().add_participant(course_id, user_id):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Ошибка при добавлении участника на курс"
+        )
 
 
 @courses_router.delete(
@@ -113,3 +121,42 @@ async def get_participants(course_id: int):
     participants = await CoursesService().get_participants(course_id)
     return participants
 
+
+@courses_router.get(
+    "/{course_id}/subscribe",
+    status_code=status.HTTP_200_OK,
+    summary="Подписаться на курс",
+)
+async def subscribe(course_id: int, user: UsersORM = Depends(current_user)):
+    """Подписывает текущего пользователя на курс."""
+    if not await CoursesService().add_participant(course_id, user.id):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Ошибка при добавлении участника на курс"
+        )
+
+@courses_router.delete(
+    "/{course_id}/unsubscribe",
+    status_code=status.HTTP_200_OK,
+    summary="Отписаться от курса",
+)
+async def unsubscribe(course_id: int, user: UsersORM = Depends(current_user)):
+    if not await CoursesService().remove_participant(course_id, user.id):
+        return HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Ошибка при удалении участника из курса"
+        )
+
+@courses_router.get(
+    "/{course_id}/content",
+    status_code=status.HTTP_200_OK,
+    summary="Получить контент курса",
+)
+async def get_content(course_id: int, page: int, user: UsersORM = Depends(current_user)):
+    if await CoursesService().check_participant(course_id, user.id):
+        return Response(await FileService().get_content(course_id, page))
+    else:
+        return HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Ошибка при получении контента курса"
+        )

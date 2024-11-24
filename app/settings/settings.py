@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     ENGINE_POOL_SIZE: int = 10
     PATH_TO_REQUEST_LOG: str = "logs/AuthServiceRequests.log"
     PATH_TO_DATABASE_LOG: str = "logs/AuthServiceDatabase.log"
-
+    FILE_SERVICE_URL: str = "http://mock_url"
     @property
     def DATABASE_URL(self):
         return f"{self.DB_DIALECT}+{self.DB_DRIVER}://{self.DB_USERNAME}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DATABASE}"

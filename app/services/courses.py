@@ -1,7 +1,8 @@
 import uuid
 
+from sqlalchemy.exc import DatabaseError
+
 from database.crud.courses import CoursesCRUD
-from exceptoins import ServiceException
 from schemas.auth import UserOut
 from schemas.courses import CourseCreate, CourseOut, CourseUpdate
 
@@ -51,13 +52,21 @@ class CoursesService:
         """Удаляет курс по его ID."""
         await self.courses_crud.delete_course(course_id)
 
-    async def add_participant(self, course_id: int, user_id: uuid.UUID) -> None:
+    async def add_participant(self, course_id: int, user_id: uuid.UUID) -> bool:
         """Добавляет участника в курс."""
-        await self.courses_crud.add_participant(course_id, user_id)
+        try:
+            await self.courses_crud.add_participant(course_id, user_id)
+            return True
+        except DatabaseError as e:
+            return False
 
-    async def remove_participant(self, course_id: int, user_id: uuid.UUID) -> None:
+    async def remove_participant(self, course_id: int, user_id: uuid.UUID) -> bool:
         """Удаляет участника из курса."""
-        await self.courses_crud.remove_participant(course_id, user_id)
+        try:
+            await self.courses_crud.remove_participant(course_id, user_id)
+            return True
+        except DatabaseError as e:
+            return False
 
     async def get_participants(self, course_id: int) -> list[UserOut]:
         """Возвращает список участников курса."""
@@ -66,3 +75,6 @@ class CoursesService:
             UserOut.model_validate(participant, from_attributes=True)
             for participant in participants
         ]
+
+    async def check_participant(self, course_id: int, user_id: uuid) -> bool:
+        return await self.courses_crud.check_participant(course_id, user_id)

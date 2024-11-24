@@ -1,7 +1,11 @@
 from contextlib import asynccontextmanager
+from typing import Any
 
 from fastapi import FastAPI
 import uvicorn
+from fastapi.responses import ORJSONResponse
+from starlette import status
+from starlette.requests import Request
 
 from api.routers import common_router
 from user import fastapi_users
@@ -44,6 +48,18 @@ app.include_router(
     prefix="/users",
     tags=["users"],
 )
+
+@app.exception_handler(Exception)
+async def catch_exceptions_handler(request: Request, err: Exception) -> Any:
+    return ORJSONResponse(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        content={
+            "method": request.method,
+            "exception": err.__class__.__name__,
+            "detail": str(err),
+        },
+    )
+
 
 if __name__ == "__main__":
     uvicorn.run(app)

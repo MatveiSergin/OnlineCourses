@@ -82,3 +82,14 @@ class CoursesCRUD(CommonCRUD):
         """Возвращает список участников курса."""
         course = await self.get_course(course_id)
         return course.participants if course else []
+
+    async def check_participant(self, course_id: int, user_id: uuid) -> bool:
+        result = await self.session.execute(
+            select(CourseParticipantORM).where(
+                CourseParticipantORM.course_id == course_id,
+                CourseParticipantORM.user_id == user_id,
+            )
+        )
+
+        return True if result.scalar_one_or_none() is not None else False
+
