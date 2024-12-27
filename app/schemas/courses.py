@@ -7,13 +7,10 @@ class CourseCreate(BaseModel):
     description: str | None
 
 
-class CourseUpdate(BaseModel):
+class CourseUpdate(CourseCreate):
     title: str | None
-    description: str | None
 
 
-class CourseOut(BaseModel):
+class CourseOut(CourseCreate):
     id: int
-    title: str
-    description: str | None
     created_at: datetime

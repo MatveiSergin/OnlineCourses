@@ -1,0 +1,44 @@
+version: '3.9'
+
+services:
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - courses-service
+    restart: always
+
+  courses-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: courses-service
+    environment:
+      - DATABASE_URL=postgresql://user:password@db:5432/courses
+      - WORKERS=4
+    depends_on:
+      - db
+    restart: always
+    expose:
+      - "8000"
+
+  db:
+    image: postgres:15
+    container_name: db
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: courses
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    restart: always
+
+volumes:
+  db_data:
